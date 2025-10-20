@@ -1,0 +1,85 @@
+<div class="email-logs-container">
+  <div class="header-actions">
+    <h2>Email Processing Logs</h2>
+    <div class="search-box">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Search emails</mat-label>
+        <input matInput [formControl]="searchControl" placeholder="Search by subject, email, or category">
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <div class="table-container">
+    <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z8">
+      <!-- From Email Column -->
+      <ng-container matColumnDef="from_email">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>From</th>
+        <td mat-cell *matCellDef="let log" class="email-cell">{{ log.from_email }}</td>
+      </ng-container>
+
+      <!-- Subject Column -->
+      <ng-container matColumnDef="subject">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Subject</th>
+        <td mat-cell *matCellDef="let log" class="subject-cell">
+          <div class="subject-text">{{ log.subject }}</div>
+          <div class="content-preview">{{ log.content | slice:0:100 }}...</div>
+        </td>
+      </ng-container>
+
+      <!-- Category Column -->
+      <ng-container matColumnDef="category">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Category</th>
+        <td mat-cell *matCellDef="let log">
+          <span class="category-badge">{{ log.category || 'Uncategorized' }}</span>
+        </td>
+      </ng-container>
+
+      <!-- Severity Column -->
+      <ng-container matColumnDef="severity">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Severity</th>
+        <td mat-cell *matCellDef="let log">
+          <mat-chip [color]="getSeverityColor(log.severity)" selected>
+            {{ log.severity || 'Unknown' }}
+          </mat-chip>
+        </td>
+      </ng-container>
+
+      <!-- Status Column -->
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+        <td mat-cell *matCellDef="let log">
+          <span [class]="'status-' + log.status?.toLowerCase()">
+            {{ log.status }}
+          </span>
+        </td>
+      </ng-container>
+
+      <!-- Date Column -->
+      <ng-container matColumnDef="created_at">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Date</th>
+        <td mat-cell *matCellDef="let log">{{ log.created_at | date:'medium' }}</td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+
+    <div *ngIf="isLoading" class="loading-center">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+
+    <div *ngIf="!isLoading && dataSource.data.length === 0" class="no-data">
+      <mat-icon>email</mat-icon>
+      <p>No email logs found</p>
+    </div>
+
+    <mat-paginator 
+      [length]="totalLogs"
+      [pageSize]="10"
+      [pageSizeOptions]="[5, 10, 20]"
+      (page)="onPageChange()"
+      showFirstLastButtons>
+    </mat-paginator>
+  </div>
+</div>

@@ -1,0 +1,80 @@
+.email-logs-container {
+  padding: 20px;
+}
+
+.header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.search-field {
+  width: 300px;
+}
+
+.table-container {
+  position: relative;
+  min-height: 400px;
+}
+
+.loading-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 50px;
+}
+
+.no-data {
+  text-align: center;
+  padding: 50px;
+  color: #666;
+}
+
+.no-data mat-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 16px;
+}
+
+.category-badge {
+  background: #e3f2fd;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.email-cell {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.subject-cell {
+  max-width: 300px;
+}
+
+.subject-text {
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.content-preview {
+  font-size: 12px;
+  color: #666;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-open {
+  color: #f44336;
+  font-weight: 500;
+}
+
+.status-processed {
+  color: #4caf50;
+  font-weight: 500;
+}
