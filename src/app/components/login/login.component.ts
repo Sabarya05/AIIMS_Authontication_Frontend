@@ -68,7 +68,7 @@ export class LoginComponent {
        authObservable.subscribe({
        next: (admin) => {
       if (this.isRegistering) {
-      this.snackBar.open('Registration successful! Please login.', 'Close', { duration: 3000 });
+      this.snackBar.open('Registration successful! Please login.', 'Close', { duration: 3000});
       this.toggleMode();
     } else {
       this.snackBar.open('Login successful!', 'Close', { duration: 3000 });
