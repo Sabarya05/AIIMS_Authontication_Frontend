@@ -32,64 +32,94 @@ export class LoginComponent {
   isLoading = false;
   isRegistering = false;
 
+  // 👁️ Password visibility
+  hidePassword = true;
+
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router, // ← MAKE SURE THIS IS INJECTED
+    private router: Router,
     private snackBar: MatSnackBar
   ) {
     this.loginForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]],
-      username: ['']
+      username: ['', []],
+      email: ['', []],
+      password: ['', [Validators.required, Validators.minLength(6)]]
     });
   }
 
-  toggleMode(): void {
-    this.isRegistering = !this.isRegistering;
-    const usernameControl = this.loginForm.get('username');
-    if (this.isRegistering) {
-      usernameControl?.setValidators([Validators.required]);
-    } else {
-      usernameControl?.clearValidators();
-    }
-    usernameControl?.updateValueAndValidity();
+  // 👁️ Toggle password visibility
+  togglePasswordVisibility(): void {
+    this.hidePassword = !this.hidePassword;
   }
 
-  onSubmit(): void {
-    if (this.loginForm.valid) {
-      this.isLoading = true;
-      const { email, password, username } = this.loginForm.value;
+  toggleMode(): void {
+  this.isRegistering = !this.isRegistering;
 
-      const authObservable = this.isRegistering 
-        ? this.authService.register(username, email, password)
-        : this.authService.login(email, password);
+  // ✅ RESET FORM when switching modes
+  this.loginForm.reset();
 
-       authObservable.subscribe({
-       next: (admin) => {
-      if (this.isRegistering) {
-      this.snackBar.open('Registration successful! Please login.', 'Close', { duration: 3000});
-      this.toggleMode();
-    } else {
-      this.snackBar.open('Login successful!', 'Close', { duration: 3000 });
-    }
-    this.isLoading = false;
-  },
-error: (error) => {
-  console.log('Full error object:', error);
-  console.log('Error status:', error.status);
-  console.log('Error response:', error.error);
-  
-  // ADD THIS - Extract the actual backend error message
-  const backendError = error.error;
-  console.log('Backend error details:', backendError);
-  
-  // Show the specific backend error message
-  const errorMessage = backendError?.message || backendError?.error || 'Invalid credentials or request format';
-  this.snackBar.open(errorMessage, 'Close', { duration: 5000 });
-  this.isLoading = false;
+  const usernameControl = this.loginForm.get('username');
+  const emailControl = this.loginForm.get('email');
+
+  if (this.isRegistering) {
+    // Registration mode
+    usernameControl?.setValidators([Validators.required]);
+    emailControl?.setValidators([Validators.required, Validators.email]);
+  } else {
+    // Login mode
+    usernameControl?.setValidators([Validators.required]);
+    emailControl?.clearValidators();
+  }
+
+  usernameControl?.updateValueAndValidity();
+  emailControl?.updateValueAndValidity();
 }
-});
+
+
+  onSubmit(): void {
+    if (this.loginForm.invalid) {
+      this.loginForm.markAllAsTouched();
+      return;
     }
+
+    this.isLoading = true;
+
+    const { username, email, password } = this.loginForm.value;
+
+    const authObservable = this.isRegistering
+      ? this.authService.register(username, email, password)   // REGISTER
+      : this.authService.login(username, password);            // LOGIN (USERNAME!)
+
+    authObservable.subscribe({
+      next: () => {
+        if (this.isRegistering) {
+          this.snackBar.open(
+            'Registration successful! Please login.',
+            'Close',
+            { duration: 3000 }
+          );
+          this.toggleMode();
+          this.loginForm.reset();
+        } else {
+          this.snackBar.open(
+            'Login successful!',
+            'Close',
+            { duration: 3000 }
+          );
+        }
+        this.isLoading = false;
+      },
+      error: (error) => {
+        const backendError = error?.error;
+        const errorMessage =
+          backendError?.message ||
+          backendError?.error ||
+          'Invalid username or password';
+
+        this.snackBar.open(errorMessage, 'Close', { duration: 5000 });
+        this.isLoading = false;
+      }
+    });
   }
 }
