@@ -3,14 +3,13 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { CommonModule } from '@angular/common';
 
-// Angular Material imports
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-login',
@@ -31,8 +30,6 @@ export class LoginComponent {
   loginForm: FormGroup;
   isLoading = false;
   isRegistering = false;
-
-  // 👁️ Password visibility
   hidePassword = true;
 
   constructor(
@@ -41,57 +38,56 @@ export class LoginComponent {
     private router: Router,
     private snackBar: MatSnackBar
   ) {
+    // 🔒 Redirect if already logged in
+    if (this.authService.isLoggedIn()) {
+      this.router.navigate(['/dashboard']);
+    }
+
     this.loginForm = this.fb.group({
-      username: ['', []],
-      email: ['', []],
+      username: ['', Validators.required],
+      email: [''],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
   }
 
-  // 👁️ Toggle password visibility
   togglePasswordVisibility(): void {
     this.hidePassword = !this.hidePassword;
   }
 
   toggleMode(): void {
-  this.isRegistering = !this.isRegistering;
+    this.isRegistering = !this.isRegistering;
+    this.loginForm.reset();
 
-  // ✅ RESET FORM when switching modes
-  this.loginForm.reset();
+    const username = this.loginForm.get('username');
+    const email = this.loginForm.get('email');
 
-  const usernameControl = this.loginForm.get('username');
-  const emailControl = this.loginForm.get('email');
+    if (this.isRegistering) {
+      email?.setValidators([Validators.required, Validators.email]);
+    } else {
+      email?.clearValidators();
+    }
 
-  if (this.isRegistering) {
-    // Registration mode
-    usernameControl?.setValidators([Validators.required]);
-    emailControl?.setValidators([Validators.required, Validators.email]);
-  } else {
-    // Login mode
-    usernameControl?.setValidators([Validators.required]);
-    emailControl?.clearValidators();
+    username?.setValidators([Validators.required]);
+
+    username?.updateValueAndValidity();
+    email?.updateValueAndValidity();
   }
 
-  usernameControl?.updateValueAndValidity();
-  emailControl?.updateValueAndValidity();
-}
-
-
   onSubmit(): void {
-    if (this.loginForm.invalid) {
-      this.loginForm.markAllAsTouched();
+    if (this.loginForm.invalid || this.isLoading) {
       return;
     }
 
     this.isLoading = true;
+    this.loginForm.disable();
 
     const { username, email, password } = this.loginForm.value;
 
-    const authObservable = this.isRegistering
-      ? this.authService.register(username, email, password)   // REGISTER
-      : this.authService.login(username, password);            // LOGIN (USERNAME!)
+    const request$ = this.isRegistering
+      ? this.authService.register(username, email, password)
+      : this.authService.login(username, password);
 
-    authObservable.subscribe({
+    request$.subscribe({
       next: () => {
         if (this.isRegistering) {
           this.snackBar.open(
@@ -100,25 +96,31 @@ export class LoginComponent {
             { duration: 3000 }
           );
           this.toggleMode();
-          this.loginForm.reset();
         } else {
-          this.snackBar.open(
-            'Login successful!',
-            'Close',
-            { duration: 3000 }
-          );
+          this.snackBar.open('Login successful!', 'Close', {
+            duration: 2000
+          });
+          this.router.navigate(['/dashboard']);
         }
-        this.isLoading = false;
       },
-      error: (error) => {
-        const backendError = error?.error;
-        const errorMessage =
-          backendError?.message ||
-          backendError?.error ||
-          'Invalid username or password';
+     error: (err) => {
+  let message = 'Login failed. Please try again.';
 
-        this.snackBar.open(errorMessage, 'Close', { duration: 5000 });
+  if (err?.error?.message) {
+    message = err.error.message;
+  }
+
+  this.snackBar.open(message, 'Close', {
+    duration: 4000
+  });
+
+  this.isLoading = false;
+  this.loginForm.enable();
+}
+,
+      complete: () => {
         this.isLoading = false;
+        this.loginForm.enable();
       }
     });
   }
